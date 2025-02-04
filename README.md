@@ -13,7 +13,9 @@ Created components for stock row and list so it gets easier to maintain
 
 No extra server was needed, the JSON file is hardcoded in the constants folder
 
-Added a few tests using jest
+Added a few tests using jest.
+
+Even tho filtering works, it still require a good throttle implementation
 
 ## Evidence
 
