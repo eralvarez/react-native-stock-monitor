@@ -1,5 +1,16 @@
-import { Image, StyleSheet, Platform, FlatList } from "react-native";
-import { useQuery } from "@tanstack/react-query";
+import {
+  Image,
+  StyleSheet,
+  Platform,
+  FlatList,
+  ScrollView,
+  RefreshControl,
+  View,
+  TextInput,
+} from "react-native";
+import { useCallback, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
 
 import ParallaxScrollView from "@/components/ParallaxScrollView";
 import { ThemedText } from "@/components/ThemedText";
@@ -7,39 +18,63 @@ import { ThemedView } from "@/components/ThemedView";
 import QUERY_KEYS from "@/constants/queryKeys";
 import { stockService } from "@/services";
 import StockRow from "@/components/StockRow/StockRow";
+import StockList from "@/components/StockList/StockList";
 
 export default function HomeScreen() {
+  const [query, setQuery] = useState("");
+  const queryClient = useQueryClient();
   const { data: stockData, isFetching: isStockDataFetching } = useQuery({
     queryKey: [QUERY_KEYS.fetchStocks],
-    queryFn: stockService.getStocks,
+    queryFn: () => stockService.getStocks({ query }),
   });
 
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
-      headerImage={
-        <Image
-          source={require("@/assets/images/partial-react-logo.png")}
-          style={styles.reactLogo}
-        />
-      }
-    >
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Stock Monitor</ThemedText>
-      </ThemedView>
+  const [refreshing, setRefreshing] = useState(false);
 
-      {isStockDataFetching ? (
-        <ThemedText>loading</ThemedText>
-      ) : (
-        <FlatList
-          data={stockData?.stocks}
-          renderItem={({ item: stock }) => (
-            <StockRow key={stock.symbol} stock={stock} />
-            // <ThemedText key={stock.symbol}>{stock.name}</ThemedText>
-          )}
-        />
-      )}
-    </ParallaxScrollView>
+  const onRefresh = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.fetchStocks] });
+    setRefreshing(true);
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 2000);
+  }, []);
+
+  const onQueryFilterChange = (newQueryValue: string) => {
+    setQuery(newQueryValue);
+    queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.fetchStocks] });
+  };
+
+  return (
+    <SafeAreaProvider style={{ backgroundColor: "white" }}>
+      <SafeAreaView>
+        <ScrollView
+          style={{ padding: 20 }}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+        >
+          <ThemedView style={styles.titleContainer}>
+            <ThemedText type="title">Stock Monitor</ThemedText>
+          </ThemedView>
+
+          <View id="controlsContainer">
+            <TextInput
+              placeholder="Search by name"
+              style={styles.input}
+              onChangeText={onQueryFilterChange}
+              value={query}
+            />
+          </View>
+
+          <View>
+            {isStockDataFetching || refreshing ? (
+              <ThemedText>loading</ThemedText>
+            ) : (
+              <StockList stockData={stockData!} />
+            )}
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    </SafeAreaProvider>
   );
 }
 
@@ -52,6 +87,12 @@ const styles = StyleSheet.create({
   stepContainer: {
     gap: 8,
     marginBottom: 8,
+  },
+  input: {
+    height: 40,
+    // margin: 12,
+    borderWidth: 1,
+    padding: 10,
   },
   reactLogo: {
     height: 178,
