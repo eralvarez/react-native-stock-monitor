@@ -8,16 +8,14 @@ import {
   View,
   TextInput,
 } from "react-native";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
 
-import ParallaxScrollView from "@/components/ParallaxScrollView";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import QUERY_KEYS from "@/constants/queryKeys";
 import { stockService } from "@/services";
-import StockRow from "@/components/StockRow/StockRow";
 import StockList from "@/components/StockList/StockList";
 
 export default function HomeScreen() {
@@ -28,6 +26,12 @@ export default function HomeScreen() {
     queryFn: () => stockService.getStocks({ query }),
   });
 
+  useEffect(() => {
+    if (query) {
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.fetchStocks] });
+    }
+  }, [query]);
+
   const [refreshing, setRefreshing] = useState(false);
 
   const onRefresh = useCallback(() => {
@@ -37,11 +41,6 @@ export default function HomeScreen() {
       setRefreshing(false);
     }, 2000);
   }, []);
-
-  const onQueryFilterChange = (newQueryValue: string) => {
-    setQuery(newQueryValue);
-    queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.fetchStocks] });
-  };
 
   return (
     <SafeAreaProvider style={{ backgroundColor: "white" }}>
@@ -60,7 +59,7 @@ export default function HomeScreen() {
             <TextInput
               placeholder="Search by name"
               style={styles.input}
-              onChangeText={onQueryFilterChange}
+              onChangeText={setQuery}
               value={query}
             />
           </View>
