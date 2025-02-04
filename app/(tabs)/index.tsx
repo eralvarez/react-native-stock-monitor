@@ -4,9 +4,9 @@ import { useQuery } from "@tanstack/react-query";
 import ParallaxScrollView from "@/components/ParallaxScrollView";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
-import STOCK_DATA from "@/constants/dummy_stock_data.json";
 import QUERY_KEYS from "@/constants/queryKeys";
 import { stockService } from "@/services";
+import StockRow from "@/components/StockRow/StockRow";
 
 export default function HomeScreen() {
   const { data: stockData, isFetching: isStockDataFetching } = useQuery({
@@ -34,7 +34,8 @@ export default function HomeScreen() {
         <FlatList
           data={stockData?.stocks}
           renderItem={({ item: stock }) => (
-            <ThemedText key={stock.symbol}>{stock.name}</ThemedText>
+            <StockRow key={stock.symbol} stock={stock} />
+            // <ThemedText key={stock.symbol}>{stock.name}</ThemedText>
           )}
         />
       )}
