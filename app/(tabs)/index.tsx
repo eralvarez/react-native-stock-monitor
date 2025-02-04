@@ -6,10 +6,12 @@ import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import STOCK_DATA from "@/constants/dummy_stock_data.json";
 import QUERY_KEYS from "@/constants/queryKeys";
+import { stockService } from "@/services";
 
 export default function HomeScreen() {
-  const stockQuery = useQuery({
+  const { data: stockData, isFetching: isStockDataFetching } = useQuery({
     queryKey: [QUERY_KEYS.fetchStocks],
+    queryFn: stockService.getStocks,
   });
 
   return (
@@ -26,12 +28,16 @@ export default function HomeScreen() {
         <ThemedText type="title">Stock Monitor</ThemedText>
       </ThemedView>
 
-      <FlatList
-        data={STOCK_DATA.stocks}
-        renderItem={({ item: stock }) => (
-          <ThemedText key={stock.symbol}>{stock.name}</ThemedText>
-        )}
-      />
+      {isStockDataFetching ? (
+        <ThemedText>loading</ThemedText>
+      ) : (
+        <FlatList
+          data={stockData?.stocks}
+          renderItem={({ item: stock }) => (
+            <ThemedText key={stock.symbol}>{stock.name}</ThemedText>
+          )}
+        />
+      )}
     </ParallaxScrollView>
   );
 }
