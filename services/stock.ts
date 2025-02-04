@@ -15,7 +15,6 @@ export default class StockService {
             stock.name.toLowerCase().includes(query),
           );
         }
-        console.log({ query });
         resolve({ stocks: filteredData });
       }, 2000);
     });
